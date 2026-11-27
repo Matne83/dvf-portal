@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex" />
+  <meta name="googlebot" content="noindex, nofollow" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#0b1120" />
+  <title>Private Login • MyAffiliate Control App</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --surface: rgba(17, 24, 39, 0.9);
+      --surface-2: rgba(30, 41, 59, 0.72);
+      --border: rgba(148, 163, 184, 0.2);
+      --accent: #ff3b5c;
+      --gold: #facc15;
+      --green: #10b981;
+      --blue: #38bdf8;
+      --text: #f9fafb;
+      --muted: #9ca3af;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: radial-gradient(circle at top, #172554 0%, var(--bg) 50%);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 14px 72px;
+    }
+    .wrap { max-width: 960px; margin: 0 auto; }
+    .login-wrap {
+      max-width: 420px; margin: 48px auto;
+      background: var(--surface); border: 1px solid var(--border); border-radius: 22px;
+      padding: 26px 22px; backdrop-filter: blur(14px);
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+    }
+    .lock-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 5px 11px; border-radius: 999px; margin-bottom: 12px;
+      background: rgba(255, 59, 92, 0.16); color: #fda4af; border: 1px solid rgba(255, 59, 92, 0.35);
+    }
+    .login-wrap h1 { font-size: 24px; font-weight: 800; }
+    .login-sub { font-size: 13px; color: var(--muted); margin: 6px 0 18px; line-height: 1.45; }
+    .form-row { margin-bottom: 12px; }
+    header {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+      gap: 12px; margin-bottom: 18px;
+    }
+    .title-group h1 { font-size: clamp(22px, 4.5vw, 30px); font-weight: 800; letter-spacing: -0.02em; }
+    .title-group p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+    .mode-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700;
+      background: rgba(16, 185, 129, 0.14); border: 1px solid rgba(16, 185, 129, 0.35); color: #6ee7b7;
+    }
+    .mode-pill.cloud {
+      background: rgba(56, 189, 248, 0.14); border-color: rgba(56, 189, 248, 0.35); color: #7dd3fc;
+    }
+    .actions-top { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    button {
+      font-family: inherit; cursor: pointer; border: none; border-radius: 12px;
+      font-weight: 700; font-size: 13px; padding: 10px 14px; transition: opacity 0.15s, transform 0.1s;
+    }
+    button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), #f97316); color: #fff; }
+    .btn-secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); }
+    .btn-success { background: var(--green); color: #052e16; }
+    .btn-copy { background: rgba(56, 189, 248, 0.16); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.35); }
+    .stats {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+      gap: 10px; margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 14px; backdrop-filter: blur(10px);
+    }
+    .stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-val { font-size: 24px; font-weight: 800; margin-top: 4px; }
+    .stat-val.warn { color: var(--gold); }
+    .stat-val.ok { color: var(--green); }
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+      padding: 16px; margin-bottom: 16px; backdrop-filter: blur(10px);
+    }
+    .panel summary {
+      font-weight: 700; font-size: 14px; cursor: pointer; list-style: none;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .panel-body { margin-top: 14px; display: grid; gap: 10px; }
+    .field-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; font-weight: 600; }
+    input, select, textarea {
+      width: 100%; padding: 11px 12px; border-radius: 11px; border: 1px solid var(--border);
+      background: rgba(15, 23, 42, 0.92); color: var(--text); font-size: 14px; outline: none;
+    }
+    input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+    .tab-btn {
+      background: var(--surface); color: var(--muted); border: 1px solid var(--border);
+      padding: 9px 14px; border-radius: 999px; font-size: 13px; font-weight: 700;
+    }
+    .tab-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .search-input { flex: 1 1 220px; min-width: 200px; }
+    .list { display: grid; gap: 14px; }
+    .product-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 18px;
+      padding: 16px; backdrop-filter: blur(10px);
+    }
+    .product-card.needs-link { border-color: rgba(250, 204, 21, 0.45); }
+    .card-top {
+      display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 10px;
+    }
+    .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+    .badge {
+      font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px;
+      background: var(--surface-2); color: #e5e7eb; border: 1px solid var(--border);
+    }
+    .badge.score { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; border-color: rgba(16, 185, 129, 0.35); }
+    .badge.comm { background: rgba(255, 59, 92, 0.16); color: #fda4af; border-color: rgba(255, 59, 92, 0.35); }
+    .badge.warn { background: rgba(250, 204, 21, 0.16); color: var(--gold); border-color: rgba(250, 204, 21, 0.4); }
+    .product-title { font-size: 17px; font-weight: 800; line-height: 1.35; }
+    .meta-line { color: var(--muted); font-size: 13px; margin-top: 6px; }
+    .meta-line strong { color: var(--gold); }
+    .platforms { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    .plat {
+      font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px;
+      background: rgba(148, 163, 184, 0.1); color: var(--muted);
+    }
+    .plat.live { background: rgba(16, 185, 129, 0.18); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.35); }
+    .link-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: stretch;
+    }
+    .link-row input { flex: 1 1 260px; font-size: 13px; }
+    .toast {
+      position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+      background: #0f172a; color: #fff; border: 1px solid var(--green);
+      padding: 11px 18px; border-radius: 999px; font-size: 13px; font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); display: none; z-index: 99;
+    }
+    .toast.err { border-color: var(--accent); }
+    .hint { font-size: 12px; color: var(--muted); line-height: 1.45; }
+    .err-msg { color: #fda4af; font-size: 13px; margin-top: 10px; min-height: 18px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <section id="loginView" class="login-wrap" style="display:none;">
+    <div class="lock-badge">🔒 Private • Blocked From Search Engines</div>
+    <h1>Owner Sign In</h1>
+    <p class="login-sub" id="loginSub">
+      Sign in with your Login ID to view Agent 1 &amp; Agent 10 product research and manage TikTok Share links.
+    </p>
+    <form onsubmit="handleLogin(event)">
+      <div class="form-row">
+        <label for="loginId">Login ID</label>
+        <input id="loginId" value="Matne83" autocomplete="username" required />
+      </div>
+      <div class="form-row">
+        <label id="secretLabel" for="loginSecret">Password</label>
+        <input id="loginSecret" type="password" placeholder="Enter your password" autocomplete="current-password" required />
+      </div>
+      <button id="loginBtn" type="submit" class="btn-primary" style="width:100%; padding:13px; font-size:15px;">
+        Unlock Control App
+      </button>
+      <div id="loginErr" class="err-msg"></div>
+    </form>
+  </section>
+
+  <div id="appShell" class="wrap" style="display:none;">
+    <header>
+      <div class="title-group">
+        <h1>MyAffiliate Control App</h1>
+        <p>Signed in as <strong id="signedUser">Matne83</strong> • Blocked from Google/Bing indexing</p>
+      </div>
+      <div class="actions-top">
+        <span id="modePill" class="mode-pill">Connected</span>
+        <button id="syncBtn" class="btn-primary" style="display:none;" onclick="pushToCloud()">☁️ Push to 24/7 Cloud</button>
+        <button class="btn-secondary" onclick="handleLogout()">🔒 Log Out</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div class="stat-card"><div class="stat-label">Total Researched</div><div class="stat-val" id="statTotal">-</div></div>
+      <div class="stat-card"><div class="stat-label">⚠️ Needs Share Link</div><div class="stat-val warn" id="statNeeds">-</div></div>
+      <div class="stat-card"><div class="stat-label">✅ Ready / Linked</div><div class="stat-val ok" id="statLinked">-</div></div>
+      <div class="stat-card"><div class="stat-label">🚀 Posted Items</div><div class="stat-val" id="statPosted">-</div></div>
+    </section>
+
+    <details class="panel">
+      <summary>
+        <span>➕ Add New Product (Quick Add to Agent 10 Queue)</span>
+        <span class="hint">Tap to expand</span>
+      </summary>
+      <div class="panel-body">
+        <div class="field-grid">
+          <div><label>Product Name *</label><input id="newName" placeholder="e.g. Wardah Colorfit Lip Ink" /></div>
+          <div><label>Category</label><input id="newCat" value="Skincare & Beauty" /></div>
+          <div><label>Price (MYR)</label><input id="newPrice" type="number" step="0.1" value="29.90" /></div>
+          <div><label>Commission (%)</label><input id="newComm" type="number" step="0.5" value="15" /></div>
+          <div><label>Rating</label><input id="newRating" type="number" step="0.1" value="4.9" /></div>
+          <div><label>Sold Count</label><input id="newSold" type="number" value="5000" /></div>
+        </div>
+        <div><label>TikTok Shop Share Link *</label><input id="newLink" placeholder="https://vt.tiktok.com/..." /></div>
+        <button class="btn-primary" onclick="addNewProduct()">Add Product to 24/7 Queue</button>
+      </div>
+    </details>
+
+    <div class="toolbar">
+      <div class="tabs">
+        <button class="tab-btn active" data-filter="needs" onclick="setFilter('needs', this)">⚠️ Needs Link</button>
+        <button class="tab-btn" data-filter="all" onclick="setFilter('all', this)">All Products</button>
+        <button class="tab-btn" data-filter="linked" onclick="setFilter('linked', this)">✅ Linked</button>
+      </div>
+      <input class="search-input" id="searchBox" type="search" placeholder="Search product or category..." oninput="render()" />
+    </div>
+
+    <main class="list" id="productList"></main>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const ALLOWED_OWNER = 'Matne83';
+    const GH_REPO = 'MyAffiliate_team';
+    const GH_BRANCH = 'main';
+
+    let allProducts = [];
+    let currentFilter = 'needs';
+    let appMode = 'detecting'; // 'local' | 'github'
+    let ghSha = null;
+
+    function slugify(text) {
+      return (text || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 48) || 'product';
+    }
+
+    function needsShareLink(p) {
+      const link = (p.affiliate_link || '').trim();
+      return !link || link === 'https://www.tiktok.com/@matne83' || link.includes('REPLACE_WITH') || link.includes('PASTE_YOUR');
+    }
+
+    function showToast(msg, isErr = false) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = isErr ? 'toast err' : 'toast';
+      el.style.display = 'block';
+      clearTimeout(window.__toastT);
+      window.__toastT = setTimeout(() => { el.style.display = 'none'; }, 3200);
+    }
+
+    function computeScore(p) {
+      if (typeof p.score === 'number') return p.score;
+      const comm = Number(p.commission_pct || 0);
+      const sold = Number(p.sold_count || 0);
+      const rating = Number(p.rating || 0);
+      const price = Number(p.price_myr || 0);
+      const cs = comm >= 15 ? 30 : comm >= 12 ? 26 : comm >= 10 ? 22 : 10;
+      const ds = sold >= 5000 ? 30 : sold >= 1500 ? 25 : sold >= 500 ? 18 : 8;
+      const rs = rating >= 4.8 ? 20 : rating >= 4.6 ? 16 : 8;
+      const ps = (price >= 20 && price <= 120) ? 20 : (price >= 15 && price <= 250) ? 15 : 8;
+      return cs + ds + rs + ps;
+    }
+
+    function showLogin(mode) {
+      document.getElementById('appShell').style.display = 'none';
+      document.getElementById('loginView').style.display = 'block';
+      document.getElementById('loginErr').textContent = '';
+      if (mode === 'github') {
+        document.getElementById('secretLabel').textContent = 'GitHub Access Token (PAT for Matne83)';
+        document.getElementById('loginSecret').placeholder = 'github_pat_...';
+        document.getElementById('loginSub').textContent =
+          'Cloud Mobile Mode: Only your Matne83 GitHub account token can unlock and edit your Private repo.';
+      } else {
+        document.getElementById('secretLabel').textContent = 'Password';
+        document.getElementById('loginSecret').placeholder = 'Enter your password';
+        document.getElementById('loginSub').textContent =
+          'Sign in with your Login ID and password to view Agent 1 & Agent 10 product research.';
+      }
+    }
+
+    function showDashboard(userLabel, mode) {
+      document.getElementById('loginView').style.display = 'none';
+      document.getElementById('appShell').style.display = 'block';
+      document.getElementById('signedUser').textContent = userLabel;
+      const pill = document.getElementById('modePill');
+      const syncBtn = document.getElementById('syncBtn');
+      if (mode === 'local') {
+        pill.textContent = '🟢 Local App Authenticated';
+        pill.className = 'mode-pill';
+        syncBtn.style.display = 'inline-block';
+      } else {
+        pill.textContent = '☁️ Cloud Authenticated (Matne83)';
+        pill.className = 'mode-pill cloud';
+        syncBtn.style.display = 'none';
+      }
+    }
+
+    async function boot() {
+      try {
+        const res = await fetch('/api/me', { cache: 'no-store' });
+        if (res.ok) {
+          const me = await res.json();
+          appMode = 'local';
+          if (me.authenticated) {
+            showDashboard(me.login_id || ALLOWED_OWNER, 'local');
+            await loadProductsLocal();
+          } else {
+            showLogin('local');
+          }
+          return;
+        }
+      } catch (_) {}
+
+      // Cloud / Phone Anywhere Mode
+      appMode = 'github';
+      const savedPat = localStorage.getItem('ma_gh_pat') || '';
+      const savedId = localStorage.getItem('ma_login_id') || '';
+      if (savedPat && savedId.toLowerCase() === ALLOWED_OWNER.toLowerCase()) {
+        try {
+          await verifyAndLoadGithub(savedId, savedPat);
+          return;
+        } catch (_) {
+          localStorage.removeItem('ma_gh_pat');
+        }
+      }
+      showLogin('github');
+    }
+
+    async function verifyAndLoadGithub(loginId, pat) {
+      if (loginId.trim().toLowerCase() !== ALLOWED_OWNER.toLowerCase()) {
+        throw new Error('Only owner login ID "' + ALLOWED_OWNER + '" is permitted.');
+      }
+      const uRes = await fetch('https://api.github.com/user', {
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!uRes.ok) throw new Error('Invalid GitHub token (HTTP ' + uRes.status + ').');
+      const user = await uRes.json();
+      if ((user.login || '').toLowerCase() !== ALLOWED_OWNER.toLowerCase()) {
+        throw new Error('Access denied: token belongs to "' + user.login + '", not "' + ALLOWED_OWNER + '".');
+      }
+      localStorage.setItem('ma_login_id', ALLOWED_OWNER);
+      localStorage.setItem('ma_gh_pat', pat);
+      showDashboard(user.login, 'github');
+      await loadProductsGithub(pat);
+    }
+
+    async function handleLogin(ev) {
+      ev.preventDefault();
+      const btn = document.getElementById('loginBtn');
+      const errEl = document.getElementById('loginErr');
+      const loginId = document.getElementById('loginId').value.trim();
+      const secret = document.getElementById('loginSecret').value;
+      errEl.textContent = '';
+      btn.disabled = true;
+      btn.textContent = 'Verifying...';
+
+      try {
+        if (appMode === 'local') {
+          const r = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ login_id: loginId, password: secret })
+          });
+          const data = await r.json();
+          if (!r.ok) throw new Error(data.error || 'Login failed');
+          document.getElementById('loginSecret').value = '';
+          showDashboard(data.login_id, 'local');
+          await loadProductsLocal();
+        } else {
+          await verifyAndLoadGithub(loginId, secret.trim());
+          document.getElementById('loginSecret').value = '';
+        }
+      } catch (err) {
+        errEl.textContent = err.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Unlock Control App';
+      }
+    }
+
+    async function handleLogout() {
+      allProducts = [];
+      if (appMode === 'local') {
+        await fetch('/api/logout', { method: 'POST' });
+        showLogin('local');
+      } else {
+        localStorage.removeItem('ma_gh_pat');
+        localStorage.removeItem('ma_login_id');
+        showLogin('github');
+      }
+    }
+
+    async function loadProductsLocal() {
+      const res = await fetch('/api/products', { cache: 'no-store' });
+      if (res.status === 401) {
+        showLogin('local');
+        return;
+      }
+      const data = await res.json();
+      allProducts = data.products || [];
+      render();
+    }
+
+    async function loadProductsGithub(pat) {
+      const url = `https://api.github.com/repos/${ALLOWED_OWNER}/${GH_REPO}/contents/my_products.json?ref=${GH_BRANCH}`;
+      const r = await fetch(url, {
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!r.ok) throw new Error('Failed to load Private repo catalog (HTTP ' + r.status + ')');
+      const meta = await r.json();
+      ghSha = meta.sha;
+      const decoded = new TextDecoder().decode(Uint8Array.from(atob(meta.content.replace(/\n/g, '')), c => c.charCodeAt(0)));
+      allProducts = JSON.parse(decoded).map(p => ({ ...p, product_id: slugify(p.product_name), score: computeScore(p), tracker: {} }));
+      render();
+    }
+
+    function setFilter(f, btn) {
+      currentFilter = f;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    }
+
+    function render() {
+      const q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+      const total = allProducts.length;
+      const needCount = allProducts.filter(needsShareLink).length;
+      const linkedCount = total - needCount;
+      const postedCount = allProducts.filter(p => {
+        const t = p.tracker || {};
+        return t.tiktok_posted_at || t.facebook_posted_at || t.telegram_posted_at || t.pinterest_posted_at || t.youtube_posted_at;
+      }).length;
+
+      document.getElementById('statTotal').textContent = total;
+      document.getElementById('statNeeds').textContent = needCount;
+      document.getElementById('statLinked').textContent = linkedCount;
+      document.getElementById('statPosted').textContent = postedCount;
+
+      const filtered = allProducts.filter(p => {
+        const need = needsShareLink(p);
+        if (currentFilter === 'needs' && !need) return false;
+        if (currentFilter === 'linked' && need) return false;
+        if (q) {
+          const hay = `${p.product_name} ${p.category || ''}`.toLowerCase();
+          if (!hay.includes(q)) return false;
+        }
+        return true;
+      });
+
+      const listEl = document.getElementById('productList');
+      if (!filtered.length) {
+        listEl.innerHTML = `<div class="panel"><p class="hint">No products match this view. Try switching tabs or adding a new product above!</p></div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(p => {
+        const pid = p.product_id || slugify(p.product_name);
+        const need = needsShareLink(p);
+        const price = Number(p.price_myr || 0);
+        const idr = Math.round((price * 3550) / 1000) * 1000;
+        const bnd = (price * 0.30).toFixed(2);
+        const t = p.tracker || {};
+        const safeName = p.product_name.replace(/'/g, "\\'");
+        return `
+          <article class="product-card ${need ? 'needs-link' : ''}">
+            <div class="card-top">
+              <div>
+                <div class="badges">
+                  <span class="badge score">Score ${computeScore(p)}/100</span>
+                  <span class="badge comm">${Number(p.commission_pct || 0).toFixed(0)}% Comm</span>
+                  <span class="badge">${p.category || 'General'}</span>
+                  ${need ? '<span class="badge warn">⚠️ Needs TikTok Share Link</span>' : '<span class="badge score">✅ Share Link Saved</span>'}
+                </div>
+                <div class="product-title">${p.product_name}</div>
+                <div class="meta-line">
+                  <strong>~RM ${price.toFixed(2)}</strong> • Rp ${idr.toLocaleString()} • BND ${bnd}
+                  &nbsp;|&nbsp; ★ ${p.rating || 4.8} • ${Number(p.sold_count || 0).toLocaleString()}+ sold
+                </div>
+                <div class="platforms">
+                  <span class="plat ${t.tiktok_posted_at ? 'live' : ''}">TikTok ${t.tiktok_posted_at ? '✓' : '•'}</span>
+                  <span class="plat ${t.facebook_posted_at ? 'live' : ''}">FB Page ${t.facebook_posted_at ? '✓' : '•'}</span>
+                  <span class="plat ${t.telegram_posted_at ? 'live' : ''}">Telegram ${t.telegram_posted_at ? '✓' : '•'}</span>
+                  <span class="plat ${t.pinterest_posted_at ? 'live' : ''}">Pinterest ${t.pinterest_posted_at ? '✓' : '•'}</span>
+                  <span class="plat ${t.youtube_posted_at ? 'live' : ''}">YT Shorts ${t.youtube_posted_at ? '✓' : '•'}</span>
+                </div>
+              </div>
+              <button class="btn-copy" onclick="copyName('${safeName}')">📋 Copy Name</button>
+            </div>
+            <div class="link-row">
+              <input id="inp_${pid}" type="url" value="${(p.affiliate_link || '').replace(/"/g, '&quot;')}" placeholder="Paste TikTok Shop Share link (https://vt.tiktok.com/...)" />
+              <button class="btn-success" onclick="saveLink('${pid}', '${safeName}')">💾 Save Link</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    async function copyName(name) {
+      try {
+        await navigator.clipboard.writeText(name);
+        showToast('Copied name! Search it in TikTok Product Marketplace.');
+      } catch {
+        showToast('Select & copy: ' + name);
+      }
+    }
+
+    async function writeGithubProducts(newList, commitMsg) {
+      const pat = localStorage.getItem('ma_gh_pat') || '';
+      if (!pat) throw new Error('Session expired. Please log in again.');
+      const url = `https://api.github.com/repos/${ALLOWED_OWNER}/${GH_REPO}/contents/my_products.json`;
+      const jsonStr = JSON.stringify(newList, null, 2) + '\n';
+      const bytes = new TextEncoder().encode(jsonStr);
+      let bin = '';
+      bytes.forEach(b => bin += String.fromCharCode(b));
+      const b64 = btoa(bin);
+      const r = await fetch(url, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${pat}`,
+          Accept: 'application/vnd.github+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ message: commitMsg, content: b64, sha: ghSha, branch: GH_BRANCH })
+      });
+      if (!r.ok) throw new Error('GitHub PUT failed: ' + (await r.text()));
+      const out = await r.json();
+      ghSha = out.content.sha;
+    }
+
+    async function saveLink(pid, productName) {
+      const inp = document.getElementById('inp_' + pid);
+      const link = (inp.value || '').trim();
+      if (!link || !link.startsWith('http')) {
+        showToast('Please paste a valid https:// TikTok Share link.', true);
+        return;
+      }
+
+      if (appMode === 'local') {
+        const r = await fetch('/api/save-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ product_id: pid, product_name: productName, affiliate_link: link })
+        });
+        if (r.status === 401) { showLogin('local'); return; }
+        if (!r.ok) { showToast('Failed to save link locally.', true); return; }
+        const data = await r.json();
+        allProducts = data.products;
+        render();
+        showToast('Saved locally! Click "Push to 24/7 Cloud" when ready.');
+        return;
+      }
+
+      try {
+        const clean = allProducts.map(({ product_id, score, tracker, ...rest }) => {
+          if (slugify(rest.product_name) === pid) rest.affiliate_link = link;
+          return rest;
+        });
+        await writeGithubProducts(clean, `chore: update affiliate link for ${pid}`);
+        showToast('Saved straight to 24/7 GitHub Cloud!');
+        await loadProductsGithub(localStorage.getItem('ma_gh_pat'));
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function addNewProduct() {
+      const name = document.getElementById('newName').value.trim();
+      const link = document.getElementById('newLink').value.trim();
+      if (!name) { showToast('Enter a product name first.', true); return; }
+      const item = {
+        product_name: name,
+        category: document.getElementById('newCat').value.trim() || 'General',
+        market: 'MY/ID/BN',
+        price_myr: Number(document.getElementById('newPrice').value || 29.9),
+        commission_pct: Number(document.getElementById('newComm').value || 15),
+        rating: Number(document.getElementById('newRating').value || 4.8),
+        sold_count: Number(document.getElementById('newSold').value || 1000),
+        product_url: 'https://www.tiktok.com/shop',
+        affiliate_link: link || 'https://www.tiktok.com/@matne83',
+        image_urls: [],
+        pain_points: ['Everyday hassle solved fast and affordably'],
+        key_benefits: ['High-rated viral favorite across MY/ID/BN', 'Easy to use everyday essential', 'Great promo value']
+      };
+
+      if (appMode === 'local') {
+        const r = await fetch('/api/add-product', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(item)
+        });
+        if (r.status === 401) { showLogin('local'); return; }
+        const data = await r.json();
+        if (!r.ok) { showToast(data.error || 'Error adding product', true); return; }
+        allProducts = data.products;
+        document.getElementById('newName').value = '';
+        document.getElementById('newLink').value = '';
+        render();
+        showToast('Added to 24/7 queue! Click Push to Cloud to sync.');
+        return;
+      }
+
+      try {
+        const clean = allProducts.map(({ product_id, score, tracker, ...rest }) => rest);
+        clean.unshift(item);
+        await writeGithubProducts(clean, `feat: add ${name} via control app`);
+        document.getElementById('newName').value = '';
+        document.getElementById('newLink').value = '';
+        showToast('Added directly to 24/7 GitHub Cloud!');
+        await loadProductsGithub(localStorage.getItem('ma_gh_pat'));
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    async function pushToCloud() {
+      const btn = document.getElementById('syncBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Syncing...';
+      try {
+        const r = await fetch('/api/sync', { method: 'POST' });
+        if (r.status === 401) { showLogin('local'); return; }
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || 'Sync failed');
+        showToast(data.message || 'Pushed to 24/7 GitHub Cloud!');
+      } catch (err) {
+        showToast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '☁️ Push to 24/7 Cloud';
+      }
+    }
+
+    boot();
+  </script>
+</body>
+</html>
