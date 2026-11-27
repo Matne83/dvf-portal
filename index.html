@@ -181,6 +181,7 @@
       </div>
       <div class="actions-top">
         <span id="modePill" class="mode-pill">Connected</span>
+        <button class="btn-secondary" onclick="refreshData()">🔄 Refresh</button>
         <button id="syncBtn" class="btn-primary" style="display:none;" onclick="pushToCloud()">☁️ Push to 24/7 Cloud</button>
         <button class="btn-secondary" onclick="handleLogout()">🔒 Log Out</button>
       </div>
@@ -325,8 +326,11 @@
         try {
           await verifyAndLoadGithub(savedId, savedPat);
           return;
-        } catch (_) {
+        } catch (err) {
           localStorage.removeItem('ma_gh_pat');
+          showLogin('github');
+          document.getElementById('loginErr').textContent = err.message;
+          return;
         }
       }
       showLogin('github');
@@ -337,17 +341,18 @@
         throw new Error('Only owner login ID "' + ALLOWED_OWNER + '" is permitted.');
       }
       const uRes = await fetch('https://api.github.com/user', {
-        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' },
+        cache: 'no-store'
       });
       if (!uRes.ok) throw new Error('Invalid GitHub token (HTTP ' + uRes.status + ').');
       const user = await uRes.json();
       if ((user.login || '').toLowerCase() !== ALLOWED_OWNER.toLowerCase()) {
         throw new Error('Access denied: token belongs to "' + user.login + '", not "' + ALLOWED_OWNER + '".');
       }
+      await loadProductsGithub(pat);
       localStorage.setItem('ma_login_id', ALLOWED_OWNER);
       localStorage.setItem('ma_gh_pat', pat);
       showDashboard(user.login, 'github');
-      await loadProductsGithub(pat);
     }
 
     async function handleLogin(ev) {
@@ -407,17 +412,67 @@
       render();
     }
 
+    function parseCsv(text) {
+      const lines = (text || '').trim().split(/\r?\n/);
+      if (lines.length < 2) return {};
+      const headers = lines[0].split(',');
+      const map = {};
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        const row = {};
+        headers.forEach((h, idx) => { row[h.trim()] = (cols[idx] || '').trim(); });
+        if (row.product_id) map[row.product_id] = row;
+      }
+      return map;
+    }
+
     async function loadProductsGithub(pat) {
       const url = `https://api.github.com/repos/${ALLOWED_OWNER}/${GH_REPO}/contents/my_products.json?ref=${GH_BRANCH}`;
       const r = await fetch(url, {
-        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' }
+        headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' },
+        cache: 'no-store'
       });
+      if (r.status === 403 || r.status === 404) {
+        throw new Error(`GitHub returned HTTP ${r.status} for ${ALLOWED_OWNER}/${GH_REPO}/my_products.json. Make sure your token has Repository access -> ${GH_REPO} AND Repository permissions -> Contents: Read and write.`);
+      }
       if (!r.ok) throw new Error('Failed to load Private repo catalog (HTTP ' + r.status + ')');
       const meta = await r.json();
       ghSha = meta.sha;
-      const decoded = new TextDecoder().decode(Uint8Array.from(atob(meta.content.replace(/\n/g, '')), c => c.charCodeAt(0)));
-      allProducts = JSON.parse(decoded).map(p => ({ ...p, product_id: slugify(p.product_name), score: computeScore(p), tracker: {} }));
+      const decoded = new TextDecoder().decode(Uint8Array.from(atob(meta.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+      const rawProducts = JSON.parse(decoded);
+
+      let trackerMap = {};
+      try {
+        const trUrl = `https://api.github.com/repos/${ALLOWED_OWNER}/${GH_REPO}/contents/tracker.csv?ref=${GH_BRANCH}`;
+        const trRes = await fetch(trUrl, {
+          headers: { Authorization: `Bearer ${pat}`, Accept: 'application/vnd.github+json' },
+          cache: 'no-store'
+        });
+        if (trRes.ok) {
+          const trMeta = await trRes.json();
+          const trText = new TextDecoder().decode(Uint8Array.from(atob(trMeta.content.replace(/\s/g, '')), c => c.charCodeAt(0)));
+          trackerMap = parseCsv(trText);
+        }
+      } catch (_) {}
+
+      allProducts = rawProducts.map(p => {
+        const pid = slugify(p.product_name);
+        return { ...p, product_id: pid, score: computeScore(p), tracker: trackerMap[pid] || {} };
+      });
       render();
+    }
+
+    async function refreshData() {
+      try {
+        if (appMode === 'local') {
+          await loadProductsLocal();
+        } else {
+          await loadProductsGithub(localStorage.getItem('ma_gh_pat') || '');
+        }
+        showToast('Refreshed live catalog!');
+      } catch (err) {
+        showToast(err.message, true);
+      }
     }
 
     function setFilter(f, btn) {
