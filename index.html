@@ -548,8 +548,9 @@
               <button class="btn-copy" onclick="copyName('${safeName}')">📋 Copy Name</button>
             </div>
             <div class="link-row">
+              <input id="price_${pid}" type="number" step="0.1" min="0" value="${price.toFixed(2)}" style="flex:0 0 110px;" title="Price (MYR)" placeholder="RM" />
               <input id="inp_${pid}" type="url" value="${(p.affiliate_link || '').replace(/"/g, '&quot;')}" placeholder="Paste TikTok Shop Share link (https://vt.tiktok.com/...)" />
-              <button class="btn-success" onclick="saveLink('${pid}', '${safeName}')">💾 Save Link</button>
+              <button class="btn-success" onclick="saveLink('${pid}', '${safeName}')">💾 Save</button>
             </div>
           </article>
         `;
@@ -590,34 +591,42 @@
 
     async function saveLink(pid, productName) {
       const inp = document.getElementById('inp_' + pid);
+      const priceInp = document.getElementById('price_' + pid);
       const link = (inp.value || '').trim();
+      const newPrice = parseFloat(priceInp ? priceInp.value : '');
+      const hasValidPrice = !isNaN(newPrice) && newPrice > 0;
       if (!link || !link.startsWith('http')) {
         showToast('Please paste a valid https:// TikTok Share link.', true);
         return;
       }
 
       if (appMode === 'local') {
+        const payload = { product_id: pid, product_name: productName, affiliate_link: link };
+        if (hasValidPrice) payload.price_myr = Number(newPrice.toFixed(2));
         const r = await fetch('/api/save-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ product_id: pid, product_name: productName, affiliate_link: link })
+          body: JSON.stringify(payload)
         });
         if (r.status === 401) { showLogin('local'); return; }
         if (!r.ok) { showToast('Failed to save link locally.', true); return; }
         const data = await r.json();
         allProducts = data.products;
         render();
-        showToast('Saved locally! Click "Push to 24/7 Cloud" when ready.');
+        showToast('Saved price & link locally! Click "Push to 24/7 Cloud" when ready.');
         return;
       }
 
       try {
         const clean = allProducts.map(({ product_id, score, tracker, ...rest }) => {
-          if (slugify(rest.product_name) === pid) rest.affiliate_link = link;
+          if (slugify(rest.product_name) === pid) {
+            rest.affiliate_link = link;
+            if (hasValidPrice) rest.price_myr = Number(newPrice.toFixed(2));
+          }
           return rest;
         });
-        await writeGithubProducts(clean, `chore: update affiliate link for ${pid}`);
-        showToast('Saved straight to 24/7 GitHub Cloud!');
+        await writeGithubProducts(clean, `chore: update price & link for ${pid}`);
+        showToast('Saved price & link straight to 24/7 GitHub Cloud!');
         await loadProductsGithub(localStorage.getItem('ma_gh_pat'));
       } catch (err) {
         showToast(err.message, true);
